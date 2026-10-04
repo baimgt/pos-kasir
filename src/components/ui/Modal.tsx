@@ -56,43 +56,59 @@ export function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
+    <>
+      {/* Backdrop — fixed, outside scroll container */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-modal-backdrop"
         onClick={onClose}
+        aria-hidden="true"
       />
-      {/* Modal */}
+
+      {/* Scroll container — fixed, full screen, scrollable */}
       <div
-        className={cn(
-          'relative z-50 w-full mx-4 bg-card rounded-2xl shadow-2xl border border-border',
-          'animate-fade-in',
-          sizes[size]
-        )}
+        className="fixed inset-0 z-50 overflow-y-auto scroll-smooth"
+        aria-modal="true"
+        role="dialog"
       >
-        {(title || showClose) && (
-          <div className="flex items-center justify-between p-6 pb-4 border-b border-border">
-            <div>
-              {title && (
-                <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-              )}
-              {description && (
-                <p className="text-sm text-muted-foreground mt-1">{description}</p>
-              )}
-            </div>
-            {showClose && (
-              <button
-                onClick={onClose}
-                className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+        {/* Flex centering wrapper — min-h-full so short modals stay centered */}
+        <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+          {/* Modal box */}
+          <div
+            className={cn(
+              'relative w-full bg-card rounded-2xl shadow-2xl border border-border',
+              'animate-modal-in',
+              sizes[size]
             )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            {(title || showClose) && (
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border rounded-t-2xl">
+                <div>
+                  {title && (
+                    <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+                  )}
+                  {description && (
+                    <p className="text-sm text-muted-foreground mt-1">{description}</p>
+                  )}
+                </div>
+                {showClose && (
+                  <button
+                    onClick={onClose}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0 ml-4"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Body */}
+            <div className="p-6">{children}</div>
           </div>
-        )}
-        <div className="p-6">{children}</div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
