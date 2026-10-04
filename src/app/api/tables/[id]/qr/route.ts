@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import Table from '@/models/Table'
 import { withAuth, isAuthError } from '@/lib/api-auth'
-import { generateQRToken } from '@/lib/utils'
+import { generateQRToken, resolveAppUrl } from '@/lib/utils'
 import QRCode from 'qrcode'
 import mongoose from 'mongoose'
 
@@ -25,8 +25,11 @@ export async function POST(
       )
     }
 
+    const body = await req.json().catch(() => ({}))
+    const clientOrigin = (body as Record<string, unknown>)?.origin as string | undefined
+
     const qrToken = generateQRToken()
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const appUrl = resolveAppUrl(req.headers, clientOrigin)
     const qrUrl = `${appUrl}/order/${qrToken}`
 
     const qrCode = await QRCode.toDataURL(qrUrl, {

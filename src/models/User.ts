@@ -80,9 +80,7 @@ userSchema.set('toJSON', {
 })
 
 // Force model recompile in development to prevent stale enum cache issues
-if (process.env.NODE_ENV !== 'production' && mongoose.models.User) {
-  delete (mongoose.models as Record<string, unknown>).User
-}
+// NOTE: Removed 'delete mongoose.models.User' — it strips attached methods like comparePassword
 
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>('User', userSchema)

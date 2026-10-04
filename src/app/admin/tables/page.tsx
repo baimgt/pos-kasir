@@ -47,6 +47,7 @@ export default function TablesPage() {
   // QR preview & print modal
   const [selectedTableForQr, setSelectedTableForQr] = useState<TableType | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [isRegeneratingAll, setIsRegeneratingAll] = useState(false)
 
   const printRef = useRef<HTMLDivElement>(null)
   const handlePrint = useReactToPrint({
@@ -119,7 +120,10 @@ export default function TablesPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+        }),
       })
       const json = await res.json()
 
@@ -166,6 +170,10 @@ export default function TablesPage() {
     try {
       const res = await fetch(`/api/tables/${tableId}/qr`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+        }),
       })
       const json = await res.json()
       if (json.success) {
@@ -181,6 +189,39 @@ export default function TablesPage() {
       toast.error('Terjadi kesalahan saat regenerate QR')
     } finally {
       setIsRegenerating(false)
+    }
+  }
+
+  const handleRegenerateAllQrs = async () => {
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'domain ini'
+    if (!confirm(`Perbarui QR Code semua meja agar menggunakan domain "${currentOrigin}"? Pelanggan yang scan QR akan diarahkan ke domain ini.`)) {
+      return
+    }
+    setIsRegeneratingAll(true)
+    const toastId = toast.loading('Memperbarui QR code semua meja...')
+    try {
+      const res = await fetch('/api/tables/regenerate-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success(json.message || 'Semua QR meja berhasil diperbarui!', { id: toastId })
+        fetchTables()
+        if (selectedTableForQr) {
+          const updatedSelected = json.data?.find((t: TableType) => t._id === selectedTableForQr._id)
+          if (updatedSelected) setSelectedTableForQr(updatedSelected)
+        }
+      } else {
+        toast.error(json.message || 'Gagal memperbarui QR meja', { id: toastId })
+      }
+    } catch {
+      toast.error('Terjadi kesalahan saat memperbarui QR', { id: toastId })
+    } finally {
+      setIsRegeneratingAll(false)
     }
   }
 
@@ -224,7 +265,20 @@ export default function TablesPage() {
             Kelola meja restoran dan QR Code unik untuk pemesanan mandiri oleh pelanggan
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRegenerateAllQrs}
+            disabled={isRegeneratingAll || tables.length === 0}
+            title="Perbarui QR code semua meja agar mengarah ke domain URL yang sedang Anda akses saat ini"
+            className="border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <Sparkles
+              className={cn('h-4 w-4 mr-2 text-primary', isRegeneratingAll && 'animate-spin')}
+            />
+            {isRegeneratingAll ? 'Memperbarui Semua QR...' : 'Sinkronkan Domain QR'}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -552,6 +606,50 @@ export default function TablesPage() {
                   {selectedTableForQr.name}
                 </div>
               </div>
+            </div>
+
+            {/* Direct Order URL Info */}
+            <div className="bg-muted/70 p-3 rounded-xl border border-border text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground flex items-center gap-1.5">
+                  <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                  Link Menu Meja:
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = typeof window !== 'undefined'
+                        ? `${window.location.origin}/order/${selectedTableForQr.qrToken}`
+                        : `/order/${selectedTableForQr.qrToken}`
+                      navigator.clipboard.writeText(url)
+                      toast.success('Link menu meja berhasil disalin!')
+                    }}
+                    className="text-primary hover:underline font-semibold text-xs cursor-pointer"
+                  >
+                    Salin Link
+                  </button>
+                  <span className="text-muted-foreground">•</span>
+                  <a
+                    href={`/order/${selectedTableForQr.qrToken}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline font-semibold text-xs cursor-pointer"
+                  >
+                    Uji Buka Tab Baru
+                  </a>
+                </div>
+              </div>
+              <p className="font-mono text-[11px] text-muted-foreground break-all select-all bg-background/80 p-2 rounded border border-border/60">
+                {typeof window !== 'undefined'
+                  ? `${window.location.origin}/order/${selectedTableForQr.qrToken}`
+                  : `/order/${selectedTableForQr.qrToken}`}
+              </p>
+              {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                  💡 <strong>Catatan:</strong> Saat ini Anda sedang membuka kasir via <code>localhost</code>. Agar QR bisa dibuka dari HP pelanggan, akses dashboard kasir ini via domain publik Anda (seperti Vercel) atau IP WiFi lokal Anda, lalu klik tombol <strong>Buat Ulang Token QR</strong> atau <strong>Sinkronkan Domain QR</strong> di atas.
+                </p>
+              )}
             </div>
 
             {/* Modal Actions */}

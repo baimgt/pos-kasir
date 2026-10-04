@@ -3,7 +3,7 @@ import connectDB from '@/lib/db'
 import Table from '@/models/Table'
 import { withAuth, isAuthError } from '@/lib/api-auth'
 import { tableSchema } from '@/lib/validations'
-import { generateQRToken } from '@/lib/utils'
+import { generateQRToken, resolveAppUrl } from '@/lib/utils'
 import QRCode from 'qrcode'
 
 // GET /api/tables
@@ -68,7 +68,8 @@ export async function POST(req: NextRequest) {
     }
 
     const qrToken = generateQRToken()
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const clientOrigin = (body as Record<string, unknown>)?.origin as string | undefined
+    const appUrl = resolveAppUrl(req.headers, clientOrigin)
     const qrUrl = `${appUrl}/order/${qrToken}`
 
     // Generate QR code as data URL

@@ -37,10 +37,16 @@ export async function GET(req: NextRequest) {
     const categories = await Category.find({ isActive: true }).sort({ name: 1 }).lean()
 
     // Get active products with categories
-    const products = await Product.find({ isActive: true, stock: { $gt: 0 } })
+    const products = await Product.find({ isActive: true })
       .populate('categoryId', 'name slug')
       .sort({ name: 1 })
       .lean()
+
+    const enrichedProducts = products.map((p) => ({
+      ...p,
+      trackStock: p.trackStock !== false,
+      productMode: p.productMode || (p.trackStock === false ? 'SALES' : 'STOCK'),
+    }))
 
     return NextResponse.json({
       success: true,
@@ -64,7 +70,7 @@ export async function GET(req: NextRequest) {
             : process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true',
         },
         categories,
-        products,
+        products: enrichedProducts,
       },
     })
   } catch (error) {

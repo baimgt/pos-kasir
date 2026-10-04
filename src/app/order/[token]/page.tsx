@@ -141,8 +141,10 @@ export default function QROrderPage() {
 
   const filteredProducts = menuData?.products.filter((p) => {
     if (selectedCategory === 'all') return true
-    const catId = typeof p.categoryId === 'object' ? (p.categoryId as { _id: string })._id : p.categoryId
-    return catId === selectedCategory
+    const catId = typeof p.categoryId === 'object' && p.categoryId !== null
+      ? (p.categoryId as { _id: string })._id
+      : p.categoryId
+    return String(catId) === String(selectedCategory)
   }) || []
 
   const subtotal = cart.getSubtotal()
@@ -525,7 +527,8 @@ export default function QROrderPage() {
             <div className="p-4 pb-28 grid grid-cols-2 gap-3">
               {filteredProducts.map((product) => {
                 const cartItem = cart.items.find((i) => i.productId === product._id)
-                const isOutOfStock = product.stock === 0
+                const shouldTrackStock = product.trackStock !== false && product.productMode !== 'SALES'
+                const isOutOfStock = shouldTrackStock && product.stock <= 0
 
                 return (
                   <div
@@ -583,7 +586,13 @@ export default function QROrderPage() {
                           </button>
                           <span className="text-sm font-bold">{cartItem.quantity}</span>
                           <button
-                            onClick={() => cart.updateQuantity(product._id, cartItem.quantity + 1)}
+                            onClick={() => {
+                              if (shouldTrackStock && cartItem.quantity >= product.stock) {
+                                toast.error(`Maksimal stok tersedia (${product.stock})`)
+                                return
+                              }
+                              cart.updateQuantity(product._id, cartItem.quantity + 1)
+                            }}
                             className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
                           >
                             <Plus className="h-4 w-4" />

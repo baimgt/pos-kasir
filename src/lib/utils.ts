@@ -244,3 +244,61 @@ export function getQuickCashAmounts(total: number): number[] {
     .sort((a, b) => a - b)
     .slice(0, 4)
 }
+
+/**
+ * Resolve the public base URL for customer-facing links (such as table QR codes).
+ * Prioritizes:
+ * 1. Client origin passed explicitly from frontend browser (window.location.origin)
+ * 2. HTTP request headers (x-forwarded-host, host) with correct protocol (https/http)
+ * 3. Vercel deployment variables (VERCEL_PROJECT_PRODUCTION_URL, VERCEL_URL)
+ * 4. NEXT_PUBLIC_APP_URL or APP_URL environment variables
+ * 5. Fallback to 'http://localhost:3000'
+ */
+export function resolveAppUrl(
+  reqHeaders?: {
+    get(name: string): string | null
+  },
+  clientOrigin?: string
+): string {
+  // 1. Client origin passed from frontend browser (e.g. window.location.origin)
+  if (clientOrigin && typeof clientOrigin === 'string' && clientOrigin.startsWith('http')) {
+    return clientOrigin.replace(/\/$/, '')
+  }
+
+  // 2. Request headers from incoming HTTP request
+  if (reqHeaders) {
+    const forwardedHost = reqHeaders.get('x-forwarded-host')
+    const host = forwardedHost || reqHeaders.get('host')
+    const proto = reqHeaders.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https')
+
+    if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+      return `${proto}://${host}`
+    }
+  }
+
+  // 3. Vercel environment variables (automatically available on Vercel deployments)
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  // 4. NEXT_PUBLIC_APP_URL or APP_URL from .env
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl.replace(/\/$/, '')
+  }
+
+  // 5. If host header exists (e.g. local WiFi network IP like 192.168.1.15:3000)
+  if (reqHeaders) {
+    const host = reqHeaders.get('x-forwarded-host') || reqHeaders.get('host')
+    const proto = reqHeaders.get('x-forwarded-proto') || 'http'
+    if (host) {
+      return `${proto}://${host}`
+    }
+  }
+
+  return (envUrl || 'http://localhost:3000').replace(/\/$/, '')
+}
+
