@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useRef, useCallback } from 'react'
-import Image from 'next/image'
 import {
   UploadCloud,
   X,
@@ -188,12 +187,11 @@ export function ImageUpload({
               aspectRatio === 'auto' && 'max-h-44 w-full min-h-[120px]'
             )}
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={value}
               alt="Preview gambar"
-              fill
-              className="object-contain"
-              unoptimized={!value.startsWith('/uploads/')}
+              className="absolute inset-0 w-full h-full object-contain"
             />
 
             {/* Overlay action buttons */}

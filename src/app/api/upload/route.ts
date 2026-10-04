@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
-import crypto from 'crypto'
 import { withAuth, isAuthError } from '@/lib/api-auth'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+// Di serverless (Vercel), turunkan limit agar data URL tetap kecil
+const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -24,7 +22,16 @@ const ALLOWED_EXTENSIONS = new Set([
   '.svg',
 ])
 
-// POST /api/upload - Upload file gambar dari perangkat
+/**
+ * POST /api/upload
+ *
+ * Menerima multipart/form-data dengan field:
+ *   - file   : File gambar
+ *   - folder : (opsional) subfolder kategori, diabaikan di mode data URL
+ *
+ * Mengembalikan base64 Data URL sehingga tidak perlu filesystem/cloud storage.
+ * Kompatibel dengan serverless (Vercel) maupun self-hosted.
+ */
 export async function POST(req: NextRequest) {
   const authResult = await withAuth(req)
   if (isAuthError(authResult)) return authResult
@@ -32,7 +39,6 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
-    const rawFolder = (formData.get('folder') as string) || 'general'
 
     if (!file || typeof file === 'string') {
       return NextResponse.json(
@@ -42,7 +48,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Validasi tipe MIME
-    if (!ALLOWED_MIME_TYPES.has(file.type.toLowerCase())) {
+    const mimeType = file.type.toLowerCase()
+    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
       return NextResponse.json(
         {
           success: false,
@@ -53,12 +60,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Validasi ekstensi
-    const originalExt = path.extname(file.name).toLowerCase()
-    if (!ALLOWED_EXTENSIONS.has(originalExt)) {
+    const dotIdx = file.name.lastIndexOf('.')
+    const ext = dotIdx >= 0 ? file.name.slice(dotIdx).toLowerCase() : ''
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
       return NextResponse.json(
         {
           success: false,
-          message: `Ekstensi file ${originalExt} tidak diizinkan. Gunakan JPG, PNG, WebP, GIF, atau SVG.`,
+          message: `Ekstensi file ${ext} tidak diizinkan. Gunakan JPG, PNG, WebP, GIF, atau SVG.`,
         },
         { status: 400 }
       )
@@ -70,43 +78,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: `Ukuran file terlalu besar (${sizeMb}MB). Maksimal ukuran file adalah 5MB.`,
+          message: `Ukuran file terlalu besar (${sizeMb}MB). Maksimal ukuran file adalah 2MB.`,
         },
         { status: 400 }
       )
     }
 
-    // Sanitasi nama folder
-    const folder = rawFolder.replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 30) || 'general'
-
-    // Buat nama file unik yang aman
-    const rawBaseName = path.basename(file.name, originalExt)
-    const sanitizedBase = rawBaseName.replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 30) || 'img'
-    const randomSuffix = crypto.randomBytes(4).toString('hex')
-    const timestamp = Date.now()
-    const filename = `${sanitizedBase}-${timestamp}-${randomSuffix}${originalExt}`
-
-    // Siapkan direktori penyimpanan di public/uploads/<folder>
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', folder)
-    await fs.promises.mkdir(uploadDir, { recursive: true })
-
-    // Tulis buffer file ke disk
-    const filePath = path.join(uploadDir, filename)
+    // Konversi ke base64 Data URL — tidak butuh filesystem
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    await fs.promises.writeFile(filePath, buffer)
-
-    // URL path yang bisa diakses dari browser
-    const url = `/uploads/${folder}/${filename}`
+    const base64 = Buffer.from(arrayBuffer).toString('base64')
+    const dataUrl = `data:${mimeType};base64,${base64}`
 
     return NextResponse.json({
       success: true,
       message: 'File berhasil diunggah',
       data: {
-        url,
-        filename,
+        url: dataUrl,
+        filename: file.name,
         size: file.size,
-        type: file.type,
+        type: mimeType,
       },
     })
   } catch (error) {
@@ -120,3 +110,4 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+
