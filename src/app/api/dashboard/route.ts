@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import Order from '@/models/Order'
 import Product from '@/models/Product'
+import User from '@/models/User'
+import Category from '@/models/Category'
 import { withAuth, isAuthError } from '@/lib/api-auth'
 import { getDayRange, getMonthRange, calculatePercentageChange } from '@/lib/utils'
 

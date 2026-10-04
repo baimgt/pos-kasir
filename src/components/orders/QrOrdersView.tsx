@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Order, OrderStatus } from '@/types'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { formatCurrency, formatDateTime, getQuickCashAmounts } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   QrCode, RefreshCw, Clock, CheckCircle2, ChefHat,
@@ -714,19 +714,22 @@ export function QrOrdersView({ title = 'Live Monitoring Pesanan QR' }: { title?:
             </div>
 
             {/* Quick cash pills */}
-            <div className="grid grid-cols-3 gap-2">
-              {[settlingOrder.total, Math.ceil(settlingOrder.total / 10000) * 10000, 50000, 100000].map(
-                (amt, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setCashAmount(amt.toString())}
-                    className="text-xs p-1.5 rounded border border-border bg-muted/30 hover:bg-muted text-foreground transition-colors"
-                  >
-                    {formatCurrency(amt)}
-                  </button>
-                )
-              )}
+            <div className="grid grid-cols-4 gap-2">
+              {getQuickCashAmounts(settlingOrder.total).map((amt, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setCashAmount(amt.toString())}
+                  className={cn(
+                    'text-xs p-1.5 rounded border transition-colors text-center font-medium',
+                    amt === settlingOrder.total
+                      ? 'border-primary/30 bg-primary/10 text-primary font-semibold'
+                      : 'border-border bg-muted/30 hover:bg-muted text-foreground'
+                  )}
+                >
+                  {amt === settlingOrder.total ? 'Uang Pas' : formatCurrency(amt)}
+                </button>
+              ))}
             </div>
 
             {/* Change calculation */}

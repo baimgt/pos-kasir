@@ -200,3 +200,47 @@ export function parseNumber(value: string | number): number {
   const parsed = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value
   return isNaN(parsed) ? 0 : parsed
 }
+
+/**
+ * Generate smart quick cash suggestions for payment given a total amount.
+ * Guarantees unique, ascending amounts starting with exact total (uang pas),
+ * followed by standard Indonesian cash denominations and clean roundups.
+ */
+export function getQuickCashAmounts(total: number): number[] {
+  if (!total || total <= 0) {
+    return [10000, 20000, 50000, 100000]
+  }
+
+  const amounts = new Set<number>()
+  amounts.add(total) // Exact amount / uang pas
+
+  // Clean rounding up suggestions
+  const round10k = Math.ceil((total + 1) / 10000) * 10000
+  if (round10k > total) amounts.add(round10k)
+
+  const round50k = Math.ceil((total + 1) / 50000) * 50000
+  if (round50k > total) amounts.add(round50k)
+
+  const round100k = Math.ceil((total + 1) / 100000) * 100000
+  if (round100k > total) amounts.add(round100k)
+
+  // Standard Indonesian banknotes greater than total
+  const standardBanknotes = [10000, 20000, 50000, 100000, 200000, 500000]
+  for (const note of standardBanknotes) {
+    if (note > total) {
+      amounts.add(note)
+    }
+  }
+
+  // Next 50k and 100k multiples if total is large
+  if (total >= 100000) {
+    amounts.add(Math.ceil((total + 1) / 50000) * 50000)
+    amounts.add(Math.ceil((total + 50001) / 50000) * 50000)
+    amounts.add(Math.ceil((total + 1) / 100000) * 100000)
+    amounts.add(Math.ceil((total + 100001) / 100000) * 100000)
+  }
+
+  return Array.from(amounts)
+    .sort((a, b) => a - b)
+    .slice(0, 4)
+}

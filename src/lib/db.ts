@@ -1,5 +1,14 @@
 import mongoose from 'mongoose'
 
+// Ensure all Mongoose models are registered in every connection to prevent MissingSchemaError on populate
+import '@/models/User'
+import '@/models/Table'
+import '@/models/Category'
+import '@/models/Product'
+import '@/models/Order'
+import '@/models/StockMovement'
+import '@/models/Settings'
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pos-kasir'
 
 interface MongooseCache {

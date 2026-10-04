@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import StockMovement, { StockMovementType } from '@/models/StockMovement'
+import User from '@/models/User'
+import Category from '@/models/Category'
 import { withAuth, isAuthError } from '@/lib/api-auth'
 import mongoose from 'mongoose'
 

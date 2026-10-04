@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getQuickCashAmounts } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   Search,
@@ -165,7 +165,7 @@ export default function POSPage() {
     setCashInput(formatted)
   }
 
-  const quickCash = [total, Math.ceil(total / 10000) * 10000, Math.ceil(total / 50000) * 50000, Math.ceil(total / 100000) * 100000]
+  const quickCash = getQuickCashAmounts(total)
 
   const handlePayment = async () => {
     if (cart.items.length === 0) {
@@ -855,9 +855,16 @@ export default function POSPage() {
                   <button
                     key={i}
                     onClick={() => setCashInput(amount.toLocaleString('id-ID'))}
-                    className="py-2 px-2 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary text-sm font-medium transition-colors text-center"
+                    className={cn(
+                      'py-2 px-2 rounded-lg text-sm font-medium transition-colors text-center',
+                      amount === total
+                        ? 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 font-semibold'
+                        : 'bg-muted hover:bg-primary/10 hover:text-primary text-foreground'
+                    )}
                   >
-                    {amount >= 1000000
+                    {amount === total
+                      ? 'Uang Pas'
+                      : amount >= 1000000
                       ? `${(amount / 1000000).toFixed(amount % 1000000 === 0 ? 0 : 1)}Jt`
                       : amount >= 1000
                       ? `${(amount / 1000).toFixed(0)}Rb`
