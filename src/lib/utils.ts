@@ -18,29 +18,35 @@ export function formatCurrency(amount: number): string {
  * Format a date as Indonesian locale string
  */
 export function formatDate(
-  date: string | Date,
+  date: string | Date | null | undefined,
   options?: Intl.DateTimeFormatOptions
 ): string {
+  if (!date) return '-'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '-'
   const defaultOptions: Intl.DateTimeFormatOptions = {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     ...options,
   }
-  return new Intl.DateTimeFormat('id-ID', defaultOptions).format(new Date(date))
+  return new Intl.DateTimeFormat('id-ID', defaultOptions).format(d)
 }
 
 /**
  * Format a date with time
  */
-export function formatDateTime(date: string | Date): string {
+export function formatDateTime(date: string | Date | null | undefined): string {
+  if (!date) return '-'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '-'
   return new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(date))
+  }).format(d)
 }
 
 /**
