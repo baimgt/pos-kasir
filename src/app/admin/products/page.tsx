@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 import { Card, CardContent, Badge, Skeleton } from '@/components/ui/Card'
 import { Modal, ConfirmDialog } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
@@ -628,12 +629,13 @@ export default function ProductsPage() {
               </div>
             )}
             <div className="col-span-2">
-              <Input
-                label="URL Gambar"
-                {...register('image')}
+              <ImageUpload
+                label="Foto / Gambar Produk"
+                value={watch('image')}
+                onChange={(url) => setValue('image', url, { shouldValidate: true })}
                 error={errors.image?.message}
+                folder="products"
                 placeholder="https://example.com/image.jpg"
-                leftIcon={<Upload className="h-4 w-4" />}
               />
             </div>
             <div className="col-span-2">

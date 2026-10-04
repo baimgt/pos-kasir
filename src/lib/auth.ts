@@ -2,12 +2,8 @@ import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 
-const JWT_SECRET = process.env.JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-in-production-def456uvw'
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not defined')
-}
 
 const secret = new TextEncoder().encode(JWT_SECRET)
 

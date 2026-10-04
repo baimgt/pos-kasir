@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 import { Card, CardContent, Badge, Skeleton } from '@/components/ui/Card'
 import { Modal, ConfirmDialog } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
@@ -434,26 +435,14 @@ export default function CategoriesPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-foreground block mb-1.5">
-              URL Gambar (Opsional)
-            </label>
-            <Input
-              placeholder="https://images.unsplash.com/..."
+            <ImageUpload
+              label="Gambar Banner Kategori (Opsional)"
               value={formData.image}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, image: e.target.value }))
-              }
+              onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+              folder="categories"
+              aspectRatio="banner"
+              placeholder="https://images.unsplash.com/..."
             />
-            {formData.image && (
-              <div className="mt-2 h-24 w-full relative rounded-lg overflow-hidden border border-border">
-                <Image
-                  src={formData.image}
-                  alt="Preview"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
           </div>
 
           <div className="flex items-center gap-2 pt-2">

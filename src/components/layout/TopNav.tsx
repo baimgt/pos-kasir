@@ -17,7 +17,12 @@ export function TopNav({ title }: TopNavProps) {
   const { user, logout } = useAuthStore()
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -55,8 +60,15 @@ export function TopNav({ title }: TopNavProps) {
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           aria-label="Toggle theme"
+          suppressHydrationWarning
         >
-          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {!mounted ? (
+            <Sun className="h-5 w-5 opacity-0" />
+          ) : theme === 'dark' ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
         </button>
 
         {/* User menu */}

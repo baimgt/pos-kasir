@@ -5,7 +5,9 @@ export async function withAuth(
   req: NextRequest,
   allowedRoles?: ('ADMIN' | 'CASHIER' | 'KITCHEN')[]
 ): Promise<{ user: JWTPayload } | NextResponse> {
-  const token = req.cookies.get('auth-token')?.value
+  const authHeader = req.headers.get('authorization')
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+  const token = req.cookies.get('auth-token')?.value || bearerToken
 
   if (!token) {
     return NextResponse.json(

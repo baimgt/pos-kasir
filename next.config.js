@@ -7,6 +7,11 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+    localPatterns: [
+      {
+        pathname: '/uploads/**',
+      },
+    ],
   },
   serverExternalPackages: ['mongoose'],
 }

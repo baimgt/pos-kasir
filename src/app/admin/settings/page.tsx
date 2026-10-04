@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 import { Card, CardContent } from '@/components/ui/Card'
 import { cn } from '@/lib/cn'
 
@@ -290,15 +291,13 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">
-                  URL Logo Toko (Opsional)
-                </label>
-                <Input
+              <div className="md:col-span-2">
+                <ImageUpload
+                  label="Logo Toko / Restoran (Opsional)"
                   value={settings.storeLogo || ''}
-                  onChange={(e) =>
-                    setSettings({ ...settings, storeLogo: e.target.value })
-                  }
+                  onChange={(url) => setSettings({ ...settings, storeLogo: url })}
+                  folder="logos"
+                  aspectRatio="auto"
                   placeholder="https://.../logo.png"
                 />
               </div>

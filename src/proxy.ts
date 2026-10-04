@@ -26,7 +26,9 @@ export async function proxy(req: NextRequest) {
   // Check for API routes
   if (pathname.startsWith('/api/')) {
     // Verify the token
-    const token = req.cookies.get('auth-token')?.value
+    const authHeader = req.headers.get('authorization')
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+    const token = req.cookies.get('auth-token')?.value || bearerToken
 
     if (!token) {
       return NextResponse.json(
